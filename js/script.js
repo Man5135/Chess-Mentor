@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let aiThinking = false;
     let playerColor = 'white';
     let aiColor = 'black';
-    let searchTimeout =  5000; // Ограничение по времени мышления для ии
+    let searchTimeout =  3000; // Ограничение по времени мышления для ии
 
     // Инициализация игры
     initGame();

@@ -15,11 +15,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let aiThinking = false;
     let playerColor = 'white';
     let aiColor = 'black';
-    let searchTimeout =  3000; // Ограничение по времени мышления для ии
 
     // Инициализация игры
     initGame();
 
+    // Функция инициализации новой игры
     function initGame() {
         playerColor = document.getElementById('colorSelect').value;
         aiColor = playerColor === 'white' ? 'black' : 'white';
@@ -32,12 +32,14 @@ document.addEventListener('DOMContentLoaded', function() {
         updateGameStatus();
         document.getElementById('moveHistory').innerHTML = '';
         
+        // Если играем черными, ИИ ходит первым
         if (playerColor === 'black') {
             aiThinking = true;
             setTimeout(makeAiMove, 500);
         }
     }
 
+    // Проверка перед началом перемещения фигуры
     function onDragStart(source, piece) {
         return !aiThinking && 
                !game.game_over() && 
@@ -45,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 (playerColor === 'black' && piece[0] === 'b'));
     }
 
+    // Обработка хода игрока
     function onDrop(source, target) {
         if (aiThinking) return 'snapback';
 
@@ -60,16 +63,19 @@ document.addEventListener('DOMContentLoaded', function() {
         updateGameStatus();
         updateMoveHistory();
         
+        // Ход ИИ после задержки
         if (!game.game_over()) {
             aiThinking = true;
             setTimeout(makeAiMove, 300);
         }
     }
 
+    // После завершения анимации перемещения
     function onSnapEnd() {
         board.position(game.fen());
     }
 
+    // Ход ИИ
     function makeAiMove() {
         const level = parseInt(document.getElementById('aiLevel').value);
         const move = findBestMove(game, level);
@@ -85,23 +91,19 @@ document.addEventListener('DOMContentLoaded', function() {
         aiThinking = false;
     }
 
+    // Поиск лучшего хода (Minimax с альфа-бета отсечением)
     function findBestMove(game, depth) {
-        // Для Expert (4) - новый мощный алгоритм
-        if (depth === 4) {
-            return findExpertMove(game);
-        }
-        
-        // Оригинальный код для Medium (2) и Hard (3)
         const moves = game.moves({verbose: true});
         if (moves.length === 0) return null;
 
+        // Сортировка ходов для лучшего альфа-бета отсечения
         moves.sort((a, b) => {
             game.move(a);
-            const aScore = evaluateBoard(game, depth);
+            const aScore = evaluateBoard(game);
             game.undo();
             
             game.move(b);
-            const bScore = evaluateBoard(game, depth);
+            const bScore = evaluateBoard(game);
             game.undo();
             
             return bScore - aScore;
@@ -127,363 +129,132 @@ document.addEventListener('DOMContentLoaded', function() {
         return bestMove;
     }
 
-    // Новый мощный алгоритм для Expert
-    function findExpertMove(game) {
-        // 1. Поиск быстрого мата
-        const quickMate = findMateInTwo(game);
-        if (quickMate) return quickMate;
-
-        // 2. Итеративное углубление с ограничением времени
-        let bestMove = null;
-        let bestScore = -Infinity;
-        const startTime = Date.now();
-        
-        for (let depth = 1; depth <= 6; depth++) {
-            if (Date.now() - startTime > searchTimeout) break;
-            
-            const result = alphaBetaSearch(game, depth, -Infinity, Infinity, false);
-            if (result.score > bestScore) {
-                bestScore = result.score;
-                bestMove = result.move;
-            }
-        }
-        
-        return bestMove || game.moves()[0]; // Запасной вариант
-    }
-
-    function alphaBetaSearch(game, depth, alpha, beta, isMaximizing) {
+    // Алгоритм Minimax
+    function minimax(game, depth, alpha, beta, isMaximizing) {
         if (depth === 0 || game.game_over()) {
-            return {
-                score: quiesce(game, alpha, beta, 3),
-                move: null
-            };
+            return evaluateBoard(game);
         }
 
         const moves = game.moves({verbose: true});
-        if (moves.length === 0) {
-            return {
-                score: evaluateAdvancedPosition(game),
-                move: null
-            };
-        }
+        if (moves.length === 0) return evaluateBoard(game);
 
-        // Сортировка ходов для лучшего отсечения
-        moves.sort((a, b) => {
-            return evaluateMovePotential(game, b) - evaluateMovePotential(game, a);
-        });
-
-        let bestMove = moves[0];
-        let bestValue = -Infinity;
-
-        for (const move of moves.slice(0, 7)) { // Анализ топ-7 ходов
-            game.move(move);
-            const result = alphaBetaSearch(game, depth - 1, -beta, -alpha, !isMaximizing);
-            const value = -result.score;
-            game.undo();
-
-            if (value > bestValue) {
-                bestValue = value;
-                bestMove = move;
-                if (value > alpha) alpha = value;
-                if (alpha >= beta) break;
-            }
-        }
-
-        return {
-            score: bestValue,
-            move: bestMove
-        };
-    }
-
-    function quiesce(game, alpha, beta, depth) {
-        const standPat = evaluateAdvancedPosition(game);
-        if (standPat >= beta) return beta;
-        if (alpha < standPat) alpha = standPat;
-        
-        if (depth <= 0) return standPat;
-        
-        const captures = game.moves({
-            verbose: true,
-            filter: m => m.captured || m.promotion || game.in_check()
-        });
-        
-        for (const move of captures) {
-            game.move(move);
-            const score = -quiesce(game, -beta, -alpha, depth - 1);
-            game.undo();
-            
-            if (score >= beta) return beta;
-            if (score > alpha) alpha = score;
-        }
-        
-        return alpha;
-    }
-
-    // Поиск мата в 1-2 хода
-    function findMateInTwo(game) {
-        // Проверка мата в 1 ход
-        const moves = game.moves({verbose: true});
-        for (const move of moves) {
-            game.move(move);
-            if (game.in_checkmate()) {
+        if (isMaximizing) {
+            let maxEval = -Infinity;
+            for (let i = 0; i < moves.length; i++) {
+                game.move(moves[i]);
+                const eval = minimax(game, depth - 1, alpha, beta, false);
                 game.undo();
-                return move;
+                maxEval = Math.max(maxEval, eval);
+                alpha = Math.max(alpha, eval);
+                if (beta <= alpha) break;
             }
-            game.undo();
-        }
-
-        // Поиск форсированного мата в 2 хода
-        for (const ourMove of moves) {
-            game.move(ourMove);
-            let isForcedMate = true;
-            const opponentMoves = game.moves({verbose: true});
-            
-            for (const opponentMove of opponentMoves) {
-                game.move(opponentMove);
-                const canEscape = game.moves().some(() => true);
+            return maxEval;
+        } else {
+            let minEval = Infinity;
+            for (let i = 0; i < moves.length; i++) {
+                game.move(moves[i]);
+                const eval = minimax(game, depth - 1, alpha, beta, true);
                 game.undo();
-                
-                if (canEscape) {
-                    isForcedMate = false;
-                    break;
-                }
+                minEval = Math.min(minEval, eval);
+                beta = Math.min(beta, eval);
+                if (beta <= alpha) break;
             }
-            
-            game.undo();
-            if (isForcedMate && opponentMoves.length > 0) {
-                return ourMove;
-            }
+            return minEval;
         }
-        
-        return null;
     }
 
-    // Улучшенная оценка позиции для Expert
-    function evaluateAdvancedPosition(game) {
+    // Позиционные таблицы для оценки
+    const pawnTable = [
+         0,  0,  0,  0,  0,  0,  0,  0,
+        50, 50, 50, 50, 50, 50, 50, 50,
+        10, 10, 20, 30, 30, 20, 10, 10,
+         5,  5, 10, 25, 25, 10,  5,  5,
+         0,  0,  0, 20, 20,  0,  0,  0,
+         5, -5,-10,  0,  0,-10, -5,  5,
+         5, 10, 10,-20,-20, 10, 10,  5,
+         0,  0,  0,  0,  0,  0,  0,  0
+    ];
+
+    const knightTable = [
+        -50,-40,-30,-30,-30,-30,-40,-50,
+        -40,-20,  0,  0,  0,  0,-20,-40,
+        -30,  0, 10, 15, 15, 10,  0,-30,
+        -30,  5, 15, 20, 20, 15,  5,-30,
+        -30,  0, 15, 20, 20, 15,  0,-30,
+        -30,  5, 10, 15, 15, 10,  5,-30,
+        -40,-20,  0,  5,  5,  0,-20,-40,
+        -50,-40,-30,-30,-30,-30,-40,-50
+    ];
+
+    // Оценка позиции
+    function evaluateBoard(game) {
         if (game.in_checkmate()) {
-            return game.turn() === aiColor[0] ? -100000 : 100000;
+            return game.turn() === aiColor[0] ? -10000 : 10000;
         }
         
         if (game.in_draw()) {
             return 0;
         }
 
-        // Материальный баланс
-        let score = evaluateMaterial(game);
-        
-        // Позиционные факторы
-        score += evaluateKingSafety(game) * 1.5;
-        score += evaluatePawnStructure(game);
-        score += evaluatePieceActivity(game) * 0.7;
-        score += evaluateSpaceControl(game);
-        score += evaluateThreats(game);
-        
-        return game.turn() === aiColor[0] ? score : -score;
-    }
-
-    function evaluateMaterial(game) {
         const pieceValues = {
-            p: 100, n: 320, b: 330, r: 500, q: 900, k: 0
+            p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000
         };
+
         let score = 0;
-        const board = game.board();
+        const boardState = game.board();
         
         for (let i = 0; i < 8; i++) {
             for (let j = 0; j < 8; j++) {
-                if (board[i][j]) {
-                    const piece = board[i][j];
+                if (boardState[i][j]) {
+                    const piece = boardState[i][j];
                     const value = pieceValues[piece.type.toLowerCase()];
-                    score += piece.color === aiColor[0] ? value : -value;
-                }
-            }
-        }
-        
-        return score;
-    }
-
-    function evaluateKingSafety(game) {
-        const kingSquare = findKingSquare(game, game.turn());
-        if (!kingSquare) return 0;
-        
-        let safety = 0;
-        
-        // Штраф за открытого короля
-        if (isOpenFile(game, kingSquare.file)) safety -= 30;
-        
-        // Бонус за пешечное прикрытие
-        safety += countPawnShield(game, kingSquare) * 15;
-        
-        // Штраф за атаки на короля
-        safety -= countAttacksOnSquare(game, kingSquare) * 20;
-        
-        return safety;
-    }
-
-    function evaluatePawnStructure(game) {
-        let score = 0;
-        const board = game.board();
-        
-        // Изолированные пешки
-        for (let file = 0; file < 8; file++) {
-            for (let rank = 0; rank < 8; rank++) {
-                const piece = board[rank][file];
-                if (piece && piece.type === 'p') {
-                    if (isIsolatedPawn(game, piece.color, file)) {
-                        score += piece.color === aiColor[0] ? -15 : 15;
+                    const sign = piece.color === aiColor[0] ? 1 : -1;
+                    
+                    score += value * sign;
+                    
+                    const idx = piece.color === 'w' ? i * 8 + j : (7 - i) * 8 + j;
+                    
+                    if (piece.type === 'p') {
+                        score += pawnTable[idx] * sign;
+                    }
+                    else if (piece.type === 'n') {
+                        score += knightTable[idx] * sign;
                     }
                 }
             }
         }
+
+        if (game.in_check()) {
+            score += game.turn() === aiColor[0] ? -50 : 50;
+        }
         
+        const mobility = game.moves().length;
+        score += game.turn() === aiColor[0] ? mobility : -mobility;
+        
+        score += countCenterControl(game) * 10;
+
         return score;
     }
 
-    function evaluatePieceActivity(game) {
-        let activity = 0;
-        const moves = game.moves({verbose: true});
-        activity += moves.length * 0.5;
-        
-        // Бонус за фигуры в центре
-        const centerSquares = ['d4', 'e4', 'd5', 'e5'];
-        for (const square of centerSquares) {
-            const piece = game.get(square);
-            if (piece && piece.color === game.turn()) {
-                activity += 10;
-            }
-        }
-        
-        return activity;
-    }
-
-    function evaluateSpaceControl(game) {
+    // Контроль центра
+    function countCenterControl(game) {
+        const centerSquares = ['e4', 'd4', 'e5', 'd5'];
         let control = 0;
-        const board = game.board();
         
-        for (let i = 2; i < 6; i++) { // Центральные ряды
-            for (let j = 2; j < 6; j++) { // Центральные файлы
-                if (board[i][j]) {
-                    const piece = board[i][j];
-                    control += piece.color === aiColor[0] ? 1 : -1;
-                }
-            }
+        for (const square of centerSquares) {
+            const attackedByAI = game.moves({square: square, verbose: true})
+                .some(move => move.color === aiColor[0]);
+            const attackedByPlayer = game.moves({square: square, verbose: true})
+                .some(move => move.color === playerColor[0]);
+                
+            if (attackedByAI) control++;
+            if (attackedByPlayer) control--;
         }
         
-        return control * 5;
+        return control;
     }
 
-    function evaluateThreats(game) {
-        let threats = 0;
-        const moves = game.moves({verbose: true});
-        
-        for (const move of moves) {
-            if (move.captured) threats += 10;
-            if (move.promotion) threats += 30;
-            if (game.in_check()) threats += 15;
-        }
-        
-        return threats;
-    }
-
-    // Вспомогательные функции
-    function findKingSquare(game, color) {
-        const board = game.board();
-        for (let i = 0; i < 8; i++) {
-            for (let j = 0; j < 8; j++) {
-                const piece = board[i][j];
-                if (piece && piece.type === 'k' && piece.color === color) {
-                    return {
-                        rank: 8 - i,
-                        file: String.fromCharCode(97 + j),
-                        square: String.fromCharCode(97 + j) + (8 - i)
-                    };
-                }
-            }
-        }
-        return null;
-    }
-
-    function isOpenFile(game, file) {
-        for (let rank = 1; rank <= 8; rank++) {
-            const square = file + rank;
-            const piece = game.get(square);
-            if (piece && piece.type === 'p') {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function countPawnShield(game, kingSquare) {
-        let count = 0;
-        const fileIndex = kingSquare.file.charCodeAt(0) - 97;
-        
-        for (let f = Math.max(0, fileIndex - 1); f <= Math.min(7, fileIndex + 1); f++) {
-            for (let r = Math.max(1, kingSquare.rank - 1); r <= Math.min(8, kingSquare.rank + 1); r++) {
-                const piece = game.get(String.fromCharCode(97 + f) + r);
-                if (piece && piece.type === 'p' && piece.color === game.turn()) {
-                    count++;
-                }
-            }
-        }
-        
-        return count;
-    }
-
-    function countAttacksOnSquare(game, square) {
-        const opponentColor = game.turn() === 'w' ? 'b' : 'w';
-        let attackCount = 0;
-        
-        const moves = game.moves({
-            verbose: true,
-            legal: false // Чтобы увидеть все возможные атаки
-        });
-        
-        for (const move of moves) {
-            if (move.to === square.square && 
-                game.get(move.from).color === opponentColor) {
-                attackCount++;
-            }
-        }
-        
-        return attackCount;
-    }
-
-    function isIsolatedPawn(game, color, file) {
-        for (let f = Math.max(0, file - 1); f <= Math.min(7, file + 1); f++) {
-            if (f === file) continue;
-            
-            for (let r = 0; r < 8; r++) {
-                const piece = game.board()[r][f];
-                if (piece && piece.type === 'p' && piece.color === color) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    function evaluateMovePotential(game, move) {
-        let score = 0;
-        
-        if (move.captured) score += getPieceValue(move.captured) * 2;
-        if (move.promotion) score += 800;
-        if (game.in_check()) score += 50;
-        
-        game.move(move);
-        score += evaluateAdvancedPosition(game) / 10;
-        game.undo();
-        
-        return score;
-    }
-
-    function getPieceValue(pieceType) {
-        const values = {
-            'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 0
-        };
-        return values[pieceType.toLowerCase()] || 0;
-    }
-
-    // Остальные функции (undoMove, updateGameStatus и т.д.) остаются без изменений
+    // Отмена хода
     function undoMove() {
         if (moveHistory.length < 2 || aiThinking) return;
         
@@ -497,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateMoveHistory();
     }
 
+    // Обновление статуса игры
     function updateGameStatus() {
         let status = '';
         const moveColor = game.turn() === 'w' ? 'White' : 'Black';
@@ -518,6 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('gameStatus').textContent = status;
     }
 
+    // Обновление истории ходов
     function updateMoveHistory() {
         const historyElement = document.getElementById('moveHistory');
         historyElement.innerHTML = '';
@@ -553,70 +326,4 @@ document.addEventListener('DOMContentLoaded', function() {
             initGame();
         }
     });
-
-    // Функция оценки для Medium/Hard (осталась без изменений)
-    function evaluateBoard(game, depth) {
-        if (game.in_checkmate()) {
-            return game.turn() === aiColor[0] ? -10000 : 10000;
-        }
-        if (game.in_draw()) {
-            return 0;
-        }
-
-        const pieceValues = {
-            p: 100, n: 320, b: 330, r: 500, q: 900, k: 0
-        };
-
-        let score = 0;
-        const boardState = game.board();
-        
-        for (let i = 0; i < 8; i++) {
-            for (let j = 0; j < 8; j++) {
-                if (boardState[i][j]) {
-                    const piece = boardState[i][j];
-                    const value = pieceValues[piece.type.toLowerCase()];
-                    score += piece.color === aiColor[0] ? value : -value;
-                }
-            }
-        }
-
-        if (game.in_check()) {
-            score += game.turn() === aiColor[0] ? -50 : 50;
-        }
-        
-        return score;
-    }
-
-    function minimax(game, depth, alpha, beta, isMaximizing) {
-        if (depth === 0 || game.game_over()) {
-            return evaluateBoard(game, depth);
-        }
-
-        const moves = game.moves({verbose: true});
-        if (moves.length === 0) return evaluateBoard(game, depth);
-
-        if (isMaximizing) {
-            let maxEval = -Infinity;
-            for (let i = 0; i < moves.length; i++) {
-                game.move(moves[i]);
-                const eval = minimax(game, depth - 1, alpha, beta, false);
-                game.undo();
-                maxEval = Math.max(maxEval, eval);
-                alpha = Math.max(alpha, eval);
-                if (beta <= alpha) break;
-            }
-            return maxEval;
-        } else {
-            let minEval = Infinity;
-            for (let i = 0; i < moves.length; i++) {
-                game.move(moves[i]);
-                const eval = minimax(game, depth - 1, alpha, beta, true);
-                game.undo();
-                minEval = Math.min(minEval, eval);
-                beta = Math.min(beta, eval);
-                if (beta <= alpha) break;
-            }
-            return minEval;
-        }
-    }
 });

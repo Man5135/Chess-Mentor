@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game Analyzer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html">Play Chess</a>
+        <a href="analyzer.html" class="active">Analyze Games</a>
+    </nav>
+
+    <section class="container">
+        <h1>Chess Game Analyzer</h1>
+        
+        <div class="game-input">
+            <textarea id="pgnInput" placeholder="Paste PGN notation here..."></textarea>
+            <button id="analyzeBtn">Analyze Game</button>
+            <button id="clearBtn">Clear</button>
+        </div>
+        
+        <div id="board"></div>
+        
+        <div class="controls">
+            <button id="prevMoveBtn">Previous Move</button>
+            <button id="nextMoveBtn">Next Move</button>
+            <button id="firstMoveBtn">First Move</button>
+            <button id="lastMoveBtn">Last Move</button>
+        </div>
+        
+        <div id="gameInfo">
+            <div id="gameStatus">Load a game to analyze</div>
+            <div id="moveCounter" class="move-counter"></div>
+            <div id="moveHistory"></div>
+        </div>
+        
+        <div id="analysisSection" class="analysis-section">
+            <h3>Move Analysis</h3>
+            <div id="analysisText"></div>
+        </div>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"></script>
+    <script src="js/analyzer.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess with AI Trainer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="active">Play Chess</a>
+        <a href="analyzer.html">Analyze Games</a>
+    </nav>
+
+    <section class="container">
+        <h1>Chess with AI Trainer</h1>
+        <div class="game-settings">
+            <select id="colorSelect">
+                <option value="white">Play as White</option>
+                <option value="black">Play as Black</option>
+            </select>
+            <select id="aiLevel">
+                <option value="1">Easy</option>
+                <option value="2">Medium</option>
+                <option value="3">Hard</option>
+            </select>
+        </div>
+        <div id="board"></div>
+        <div class="controls">
+            <button id="newGameBtn">New Game</button>
+            <button id="flipBoardBtn">Flip Board</button>
+            <button id="undoBtn">Undo Move</button>
+            <button id="hintBtn">Get Hint</button>
+        </div>
+        <div id="gameStatus">White to move</div>
+        <div id="moveHistory"></div>
+        <div id="hintSection" class="hint-section">
+            <h3>AI Trainer Advice</h3>
+            <div id="hintText"></div>
+        </div>
+    </section>
+
+    <!-- Sound elements -->
+    <audio id="moveSound" src="sounds/move.mp3" preload="auto"></audio>
+    <audio id="captureSound" src="sounds/capture.mp3" preload="auto"></audio>
+    <audio id="checkSound" src="sounds/check.mp3" preload="auto"></audio>
+    <audio id="winSound" src="sounds/win.mp3" preload="auto"></audio>
+    <audio id="loseSound" src="sounds/lose.mp3" preload="auto"></audio>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>

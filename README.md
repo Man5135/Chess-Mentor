@@ -1,6 +1,6 @@
 # ♟️ Chess Master Suite - Ultimate Chess Experience
 
-![Chess Banner](https://images.unsplash.com/photo-1543092587-d8b8feaf4f16?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80)
+
 
 **Chess Master Suite** - это мощный веб-интерфейс для игры в шахматы, анализа партий и решения шахматных задач, сочетающий в себе элегантный дизайн с богатым функционалом.
 

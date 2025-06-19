@@ -17,6 +17,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let aiColor = 'black';
     let hintActive = false;
     let currentHighlights = [];
+    let gameHeaders = {
+        Event: "Chess with AI",
+        Site: "localhost",
+        Date: new Date().toISOString().split('T')[0],
+        Round: "1",
+        White: "Player",
+        Black: "AI",
+        Result: "*"
+    };
 
     // Инициализация звуков
     const sounds = {
@@ -26,6 +35,59 @@ document.addEventListener('DOMContentLoaded', function() {
         win: document.getElementById('winSound'),
         lose: document.getElementById('loseSound')
     };
+
+    // Функция для копирования PGN в буфер обмена
+    function copyPgnToClipboard() {
+        updateGameHeaders();
+        
+        let pgn = '';
+        
+        // Добавляем заголовки
+        for (const [key, value] of Object.entries(gameHeaders)) {
+            pgn += `[${key} "${value}"]\n`;
+        }
+        
+        // Добавляем ходы
+        pgn += '\n' + game.pgn() + '\n';
+        
+        // Копируем в буфер обмена
+        navigator.clipboard.writeText(pgn)
+            .then(() => {
+                showNotification('PGN copied to clipboard!');
+            })
+            .catch(err => {
+                console.error('Failed to copy PGN: ', err);
+                showNotification('Failed to copy PGN', true);
+            });
+    }
+
+    // Показать уведомление
+    function showNotification(message, isError = false) {
+        const notification = document.createElement('div');
+        notification.className = `copy-notification ${isError ? 'error' : ''}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 2000);
+    }
+
+    // Обновляем заголовки игры
+    function updateGameHeaders() {
+        gameHeaders.White = playerColor === 'white' ? "Player" : "AI";
+        gameHeaders.Black = playerColor === 'black' ? "Player" : "AI";
+        gameHeaders.Date = new Date().toISOString().split('T')[0];
+        
+        if (game.in_checkmate()) {
+            gameHeaders.Result = game.turn() === 'w' ? "0-1" : "1-0";
+        } else if (game.in_draw()) {
+            gameHeaders.Result = "1/2-1/2";
+        } else {
+            gameHeaders.Result = "*";
+        }
+    }
 
     // Проверка наличия сохраненной игры в Local Storage
     function loadGameFromStorage() {
@@ -42,9 +104,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 moveHistory.length = 0;
                 moveHistory.push(game.fen());
                 
-                // Восстановление истории ходов
                 if (gameData.history) {
-                    game.load(gameData.fen);
+                    game.load_pgn(gameData.pgn);
                     updateMoveHistory();
                 }
                 
@@ -60,22 +121,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Сохранение игры в Local Storage
     function saveGameToStorage() {
+        updateGameHeaders();
         const gameData = {
             fen: game.fen(),
+            pgn: game.pgn(),
             playerColor: playerColor,
             aiColor: aiColor,
             aiLevel: parseInt(document.getElementById('aiLevel').value),
             history: game.history({verbose: true})
         };
         localStorage.setItem('chessGame', JSON.stringify(gameData));
-    }
-
-    // Функция для воспроизведения звука
-    function playSound(sound) {
-        if (sounds[sound]) {
-            sounds[sound].currentTime = 0;
-            sounds[sound].play().catch(e => console.log("Sound play error:", e));
-        }
     }
 
     // Инициализация игры
@@ -86,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         playerColor = document.getElementById('colorSelect').value;
         aiColor = playerColor === 'white' ? 'black' : 'white';
+        updateGameHeaders();
         
         game.reset();
         board.start();
@@ -98,13 +154,11 @@ document.addEventListener('DOMContentLoaded', function() {
         clearHighlights();
         hintActive = false;
         
-        // Сохраняем новую игру
         saveGameToStorage();
         
-        // Если играем черными, ИИ ходит первым
         if (playerColor === 'black') {
             aiThinking = true;
-            setTimeout(makeAiMove, 500);
+            setTimeout(makeAiMove, 100);
         }
     }
 
@@ -132,7 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (move === null) return 'snapback';
 
-        // Воспроизводим звук в зависимости от типа хода
         if (move.captured) {
             playSound('capture');
         } else {
@@ -144,10 +197,9 @@ document.addEventListener('DOMContentLoaded', function() {
         updateMoveHistory();
         saveGameToStorage();
         
-        // Ход ИИ после задержки
         if (!game.game_over()) {
             aiThinking = true;
-            setTimeout(makeAiMove, 600);
+            setTimeout(makeAiMove, 200);
         }
     }
 
@@ -164,7 +216,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (move) {
             game.move(move);
             
-            // Воспроизводим звук для хода AI
             if (move.captured) {
                 playSound('capture');
             } else {
@@ -186,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const moves = game.moves({verbose: true});
         if (moves.length === 0) return null;
 
-        // Сортировка ходов для лучшего альфа-бета отсечения
         moves.sort((a, b) => {
             game.move(a);
             const aScore = evaluateBoard(game);
@@ -555,9 +605,17 @@ document.addEventListener('DOMContentLoaded', function() {
         currentHighlights = [];
     }
 
-    // Обработчики событий
+    // Функция для воспроизведения звука
+    function playSound(sound) {
+        if (sounds[sound]) {
+            sounds[sound].currentTime = 0;
+            sounds[sound].play().catch(e => console.log("Sound play error:", e));
+        }
+    }
+
+    // Event listeners
     document.getElementById('newGameBtn').addEventListener('click', function() {
-        initGame(true); // Принудительно начинаем новую игру
+        initGame(true);
     });
     
     document.getElementById('flipBoardBtn').addEventListener('click', function() {
@@ -592,6 +650,8 @@ document.addEventListener('DOMContentLoaded', function() {
             initGame(true);
         }
     });
+
+    document.getElementById('savePgnBtn').addEventListener('click', copyPgnToClipboard);
 
     // Инициализация игры при загрузке страницы
     initGame();

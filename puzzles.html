@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Puzzles</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html">Play Chess</a>
+        <a href="analyzer.html">Analyze Games</a>
+        <a href="puzzles.html" class="active">Chess Puzzles</a>
+    </nav>
+
+    <section class="container">
+        <h1>Chess Puzzles</h1>
+        
+        <div id="board"></div>
+        
+        <div id="puzzleInfo">
+            <div id="puzzleTitle">Select a puzzle to begin</div>
+            <div id="puzzlePlayers" class="puzzle-players"></div>
+            <div id="puzzleDescription"></div>
+        </div>
+        
+        <div class="puzzle-controls">
+            <button id="prevPuzzleBtn">Previous Puzzle</button>
+            <button id="nextPuzzleBtn">Next Puzzle</button>
+            <button id="showSolutionBtn">Show Solution</button>
+            <button id="resetPuzzleBtn">Reset Puzzle</button>
+        </div>
+        
+        <div id="solutionSection" class="solution-section">
+            <h3>Solution</h3>
+            <div id="solutionText"></div>
+            <div id="solutionMoves"></div>
+        </div>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"></script>
+    <script src="js/puzzles.js"></script>
+</body>
+</html>

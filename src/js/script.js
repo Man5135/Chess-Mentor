@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         onDragStart: onDragStart,
         onDrop: onDrop,
         onSnapEnd: onSnapEnd,
-        pieceTheme: 'img/chesspieces/wikipedia/{piece}.png'
+        pieceTheme: './wikipedia/{piece}.png'
     });
 
     // Настройки игры
@@ -53,11 +53,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Копируем в буфер обмена
         navigator.clipboard.writeText(pgn)
             .then(() => {
-                showNotification('PGN copied to clipboard!');
+                showNotification('PGN скопировано в буфер обмена!');
             })
             .catch(err => {
-                console.error('Failed to copy PGN: ', err);
-                showNotification('Failed to copy PGN', true);
+                console.error('Ошибка копирования: ', err);
+                showNotification('Ошибка копирования', true);
             });
     }
 
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateGameStatus();
                 return true;
             } catch (e) {
-                console.error("Error loading game from storage:", e);
+                console.error("Ошибка загрузки игры из хранилища:", e);
                 localStorage.removeItem('chessGame');
             }
         }
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
         aiThinking = false;
     }
 
-    // Поиск лучшего хода (Minimax с альфа-бета отсечением)
+    // Поиск лучшего хода
     function findBestMove(game, depth) {
         const moves = game.moves({verbose: true});
         if (moves.length === 0) return null;
@@ -465,22 +465,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const moveColor = game.turn() === 'w' ? 'White' : 'Black';
 
         if (game.in_checkmate()) {
-            status = `Game over, ${moveColor} is checkmated!`;
+            status = `Игра закончена, ${moveColor} поставлен шах и мат!`;
             if (moveColor === playerColor) {
                 playSound('lose');
             } else {
                 playSound('win');
             }
         } else if (game.in_draw()) {
-            status = 'Game over, drawn position';
+            status = 'Игра закончена, ничья!';
         } else {
-            status = `${moveColor} to move`;
+            status = `${moveColor} ходят`;
             if (game.in_check()) {
                 status += ` (${moveColor} is in check)`;
                 playSound('check');
             }
             if (aiThinking) {
-                status += ' - AI thinking...';
+                status += ' - Соперник думает...';
             }
         }
 
@@ -535,25 +535,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let explanation = "";
         if (bestMove.captured) {
-            explanation = `Capturing the ${bestMove.captured} is the best move. `;
+            explanation = `Захват ${bestMove.captured} - лучший ход. `;
         } else if (bestMove.promotion) {
-            explanation = `Promoting to ${bestMove.promotion} is recommended. `;
+            explanation = `Рекомендуется превращение в ${bestMove.promotion}. `;
         } else if (bestMove.san.includes('O-O')) {
-            explanation = `Castling is a good idea to improve king safety. `;
+            explanation = `Рокировка - хорошая идея для улучшения безопасности короля. `;
         } else {
-            explanation = `Moving this piece improves your position. `;
+            explanation = `Этот ход улучшает вашу позицию. `;
         }
-        
+
         if (scoreDiff > 150) {
-            explanation += "This gives you a decisive advantage!";
+            explanation += "Это дает вам решающее преимущество!";
         } else if (scoreDiff > 50) {
-            explanation += "This is an excellent move that significantly improves your position.";
+            explanation += "Это отличный ход, значительно улучшающий вашу позицию.";
         } else if (scoreDiff > 10) {
-            explanation += "This is a good move that gives you an advantage.";
+            explanation += "Это хороший ход, дающий вам преимущество.";
         } else if (scoreDiff > -10) {
-            explanation += "This is a solid move that maintains equality.";
+            explanation += "Это надежный ход, сохраняющий равновесие.";
         } else {
-            explanation += "This is the best available move in a difficult position.";
+            explanation += "Это лучший возможный ход в сложной позиции.";
         }
         
         return {
@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `${Math.ceil(game.history().length / 2)}... ${hint.bestMove.piece.toUpperCase()}${hint.bestMove.from}-${hint.bestMove.to}`;
         
         hintTextElement.innerHTML = `
-            <div class="hint-move">Recommended move: ${moveNotation}</div>
+            <div class="hint-move">Рекомендованный ход: ${moveNotation}</div>
             <div class="hint-explanation">${hint.explanation}</div>
         `;
     }
@@ -653,6 +653,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('savePgnBtn').addEventListener('click', copyPgnToClipboard);
 
-    // Инициализация игры при загрузке страницы
     initGame();
 });
+
+// Экспортируем функции для тестирования
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        evaluateBoard,
+        findBestMove,
+        minimax,
+        countCenterControl,
+    };
+}

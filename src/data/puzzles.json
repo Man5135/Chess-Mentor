@@ -1,0 +1,28 @@
+{
+    "puzzles": [
+        {
+            "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+            "solution": [
+                {"from": "f3", "to": "e5", "piece": "n"},
+                {"from": "f6", "to": "e4", "piece": "n"},
+                {"from": "e5", "to": "c6", "piece": "n"}
+            ],
+            "description": "Knight fork tactic",
+            "difficulty": "easy",
+            "rating": 1200,
+            "theme": "Вилка"
+        },
+        {
+            "fen": "r1bqkbnr/ppp2ppp/2np4/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+            "solution": [
+                {"from": "c4", "to": "f7", "piece": "b"},
+                {"from": "e8", "to": "f7", "piece": "k"},
+                {"from": "f3", "to": "e5", "piece": "n"}
+            ],
+            "description": "Bishop sacrifice",
+            "difficulty": "medium",
+            "rating": 1500,
+            "theme": "Пожертвование"
+        }
+    ]
+}

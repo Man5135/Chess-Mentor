@@ -3,42 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess with AI Trainer</title>
+    <title>Chess with AI</title>
+    <link rel="icon" type="image/x-icon" href="images\logo.ico">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
 </head>
 <body>
     <nav class="navbar">
-        <a href="index.html" class="active">Play Chess</a>
-        <a href="analyzer.html">Analyze Games</a>
-        <a href="puzzles.html">Chess Puzzles</a>
+        <a href="index.html" class="active">Играть в шахматы</a>
+        <a href="analyzer.html">Анализ игр</a>
+        <a href="puzzles.html">Задачи</a>
     </nav>
 
     <section class="container">
-        <h1>Chess with AI Trainer</h1>
+        <h1>Партия против ИИ</h1>
         <div class="game-settings">
             <select id="colorSelect">
-                <option value="white">Play as White</option>
-                <option value="black">Play as Black</option>
+                <option value="white" class="select_option">Белые</option>
+                <option value="black" class="select_option">Черные</option>
             </select>
             <select id="aiLevel">
-                <option value="1">Easy</option>
-                <option value="2">Medium</option>
-                <option value="3">Hard</option>
+                <option value="1">Легкий</option>
+                <option value="2">Средний</option>
+                <option value="3">Сложный</option>
             </select>
         </div>
         <div id="board"></div>
         <div class="controls">
-            <button id="newGameBtn">New Game</button>
-            <button id="flipBoardBtn">Flip Board</button>
-            <button id="undoBtn">Undo Move</button>
-            <button id="hintBtn">Get Hint</button>
-            <button id="savePgnBtn">Save as PGN</button>
+            <button id="newGameBtn">Новая игра</button>
+            <button id="flipBoardBtn">Перевернуть доску</button>
+            <button id="undoBtn">Вернуть действие</button>
+            <button id="hintBtn">Совет</button>
+            <button id="savePgnBtn">Сохранить PGN</button>
         </div>
-        <div id="gameStatus">White to move</div>
-        <div id="moveHistory"></div>
+        <div id="gameStatus">Ход белых</div>
+        <div id="moveHistory" class="moveHistory"></div>
         <div id="hintSection" class="hint-section">
-            <h3>AI Trainer Advice</h3>
+            <h3>Советы</h3>
             <div id="hintText"></div>
         </div>
     </section>

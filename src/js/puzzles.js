@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
         draggable: true,
         position: 'start',
         onDrop: onDrop,
-        pieceTheme: 'img/chesspieces/wikipedia/{piece}.png'
+        pieceTheme: './wikipedia/{piece}.png'
     });
 
     const game = new Chess();
@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentStep = 0;
     let isShowingSolution = false;
     let currentHighlights = [];
+    let playerColor = 'white';
+    let isPlayerTurn = true;
 
     // DOM elements
     const puzzleTitle = document.getElementById('puzzleTitle');
@@ -56,6 +58,9 @@ document.addEventListener('DOMContentLoaded', function() {
         game.load(currentPuzzle.fen);
         board.position(currentPuzzle.fen);
         
+        playerColor = game.turn() === 'w' ? 'white' : 'black';
+        isPlayerTurn = true;
+        
         puzzleTitle.textContent = currentPuzzle.description || 'Chess Puzzle';
         puzzlePlayers.textContent = currentPuzzle.players || '';
         puzzleDescription.textContent = currentPuzzle.theme ? `Theme: ${currentPuzzle.theme}` : '';
@@ -72,7 +77,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle piece drop
     function onDrop(source, target) {
-        if (isShowingSolution || !currentPuzzle) return 'snapback';
+        if (isShowingSolution || !currentPuzzle || !isPlayerTurn) return 'snapback';
+
+        const piece = game.get(source);
+        if (!piece || (piece.color === 'w' && playerColor !== 'white') || (piece.color === 'b' && playerColor !== 'black')) {
+            return 'snapback';
+        }
 
         const move = game.move({
             from: source,
@@ -84,22 +94,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
         board.position(game.fen());
         
-        // Check if the move matches the solution
+        // Check if the move is correct
         if (solutionSteps.length > 0) {
             const correctMove = solutionSteps[0];
             
+            // Изменено: Сравниваем только to и from, так как piece может отличаться из-за превращения
             if (move.from === correctMove.from && move.to === correctMove.to) {
-                // Correct move
+                // Correct move - make AI response
                 solutionSteps.shift();
+                isPlayerTurn = false;
                 
-                if (solutionSteps.length === 0) {
+                if (solutionSteps.length > 0) {
+                    setTimeout(() => {
+                        const aiMove = solutionSteps[0];
+                        const aiMoveObj = game.move({
+                            from: aiMove.from,
+                            to: aiMove.to,
+                            promotion: 'q' // Добавлено: учитываем превращение пешки
+                        });
+                        
+                        if (aiMoveObj) {
+                            board.position(game.fen());
+                            solutionSteps.shift();
+                            isPlayerTurn = solutionSteps.length > 0 && 
+                                         (solutionSteps[0].piece === 'p' ? 
+                                          game.turn() === (playerColor === 'white' ? 'w' : 'b') : 
+                                          true);
+                            
+                            if (solutionSteps.length === 0) {
+                                solutionText.innerHTML = '<div class="success">Puzzle solved!</div>';
+                            }
+                        }
+                    }, 500);
+                } else {
                     solutionText.innerHTML = '<div class="success">Puzzle solved!</div>';
+                    isPlayerTurn = true;
                 }
             } else {
-                // Wrong move
+                // Incorrect move - revert immediately
                 solutionText.innerHTML = '<div class="error">Incorrect move. Try again.</div>';
-                game.undo();
-                board.position(game.fen());
+                setTimeout(() => {
+                    game.undo();
+                    board.position(game.fen());
+                }, 100);
+                return 'snapback';
             }
         }
         
@@ -117,6 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         isShowingSolution = true;
         currentStep = 0;
+        isPlayerTurn = false;
         
         // Reset to initial position
         game.load(currentPuzzle.fen);
@@ -130,36 +169,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function nextSolutionStep() {
-        if (!currentPuzzle || currentStep >= currentPuzzle.solution.length * 2) {
+        if (!currentPuzzle || currentStep >= currentPuzzle.solution.length) {
             solutionText.innerHTML = '<div class="info">Solution complete.</div>';
             isShowingSolution = false;
+            isPlayerTurn = true;
             return;
         }
         
         clearHighlights();
         
-        if (currentStep % 2 === 0) {
-            // Player move
-            const moveIndex = Math.floor(currentStep / 2);
-            const move = currentPuzzle.solution[moveIndex];
-            
-            highlightSquare(move.from, 'from');
-            highlightSquare(move.to, 'to');
-            
-            const moveElement = document.createElement('div');
-            moveElement.className = 'solution-move';
-            moveElement.textContent = `${moveIndex + 1}. ${move.piece.toUpperCase()}${move.from}-${move.to}`;
-            solutionMoves.appendChild(moveElement);
-        } else {
-            // AI move
-            const moveIndex = Math.floor(currentStep / 2);
-            const move = currentPuzzle.solution[moveIndex];
-            game.move(move);
-            board.position(game.fen());
+        const move = currentPuzzle.solution[currentStep];
+        const moveObj = game.move({
+            from: move.from,
+            to: move.to,
+            promotion: 'q' // Добавлено: учитываем превращение пешки
+        });
+        
+        if (!moveObj) {
+            console.error('Invalid move in solution:', move);
+            return;
         }
+        
+        board.position(game.fen());
+        
+        highlightSquare(move.from, 'from');
+        highlightSquare(move.to, 'to');
+        
+        const moveElement = document.createElement('div');
+        moveElement.className = 'solution-move';
+        moveElement.textContent = `${currentStep + 1}. ${move.piece.toUpperCase()} ${move.from}-${move.to}`;
+        solutionMoves.appendChild(moveElement);
         
         currentStep++;
         solutionMoves.scrollTop = solutionMoves.scrollHeight;
+        
+        // Auto-advance for solution
+        if (isShowingSolution) {
+            setTimeout(nextSolutionStep, 1000);
+        }
     }
 
     // Navigation functions

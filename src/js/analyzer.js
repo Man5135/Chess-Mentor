@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const board = Chessboard('board', {
         draggable: false,
         position: 'start',
-        pieceTheme: 'img/chesspieces/wikipedia/{piece}.png'
+        pieceTheme: './wikipedia/{piece}.png'
     });
     
     const game = new Chess();

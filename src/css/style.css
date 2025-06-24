@@ -64,13 +64,15 @@ h1 {
     justify-content: center;
     gap: 15px;
     margin-bottom: 15px;
+
 }
 
 select {
     padding: 8px 12px;
     border-radius: 5px;
-    border: 1px solid #ddd;
-    background-color: white;
+    border: 1px solid #ffae00;
+    color: #ffae00;
+    background-color: #252525;
     font-size: 14px;
 }
 
@@ -160,7 +162,7 @@ button:disabled {
 }
 
 /* Move history */
-#moveHistory {
+.moveHistory {
     max-height: 200px;
     overflow-y: auto;
     background: #252525;
@@ -168,6 +170,10 @@ button:disabled {
     border-radius: 5px;
     font-family: 'Courier New', monospace;
     line-height: 1.5;
+}
+
+.moveHistory::-webkit-scrollbar{
+    display: none;
 }
 
 .move-entry {
@@ -324,6 +330,17 @@ button:disabled {
     border: 2px solid #9b59b6;
 }
 
+.puzzle-controls{
+    display: flex;
+    padding: 10px;
+    gap: 20px;
+}
+
+.puzzleInfo{
+    display: grid;
+    justify-self: center;
+    padding: 10px
+}
 
 /* Sound elements */
 audio {

@@ -10,37 +10,37 @@
 </head>
 <body>
     <nav class="navbar">
-        <a href="index.html">Play Chess</a>
-        <a href="analyzer.html" class="active">Analyze Games</a>
-        <a href="puzzles.html">Chess Puzzles</a>
+        <a href="index.html">Играть в шахматы</a>
+        <a href="analyzer.html" class="active">Анализ игр</a>
+        <a href="puzzles.html">Задачи</a>
     </nav>
 
     <section class="container">
-        <h1>Chess Game Analyzer</h1>
+        <h1>Анализ игр</h1>
         
         <div class="game-input">
-            <textarea id="pgnInput" placeholder="Paste PGN notation here..."></textarea>
-            <button id="analyzeBtn">Analyze Game</button>
-            <button id="clearBtn">Clear</button>
+            <textarea id="pgnInput" placeholder="Вставьте сюда PGN..."></textarea>
+            <button id="analyzeBtn">Анализировать</button>
+            <button id="clearBtn">Очистить</button>
         </div>
         
         <div id="board"></div>
         
         <div class="controls">
-            <button id="prevMoveBtn">Previous Move</button>
-            <button id="nextMoveBtn">Next Move</button>
-            <button id="firstMoveBtn">First Move</button>
-            <button id="lastMoveBtn">Last Move</button>
+            <button id="prevMoveBtn">Прошлый ход</button>
+            <button id="nextMoveBtn">Следующий ход</button>
+            <button id="firstMoveBtn">Первый ход</button>
+            <button id="lastMoveBtn">Последний ход</button>
         </div>
         
         <div id="gameInfo">
-            <div id="gameStatus">Load a game to analyze</div>
+            <div id="gameStatus">Загрузите игру для анализа</div>
             <div id="moveCounter" class="move-counter"></div>
             <div id="moveHistory"></div>
         </div>
         
         <div id="analysisSection" class="analysis-section">
-            <h3>Move Analysis</h3>
+            <h3>Анализ движений</h3>
             <div id="analysisText"></div>
         </div>
     </section>

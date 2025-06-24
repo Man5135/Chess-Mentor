@@ -4,36 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chess Puzzles</title>
+    <link rel="icon" type="image/x-icon" href="images\logo.ico">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
 </head>
 <body>
     <nav class="navbar">
-        <a href="index.html">Play Chess</a>
-        <a href="analyzer.html">Analyze Games</a>
-        <a href="puzzles.html" class="active">Chess Puzzles</a>
+        <a href="index.html">Играть в шахматы</a>
+        <a href="analyzer.html">Анализ игр</a>
+        <a href="puzzles.html" class="active">Задачи</a>
     </nav>
 
     <section class="container">
-        <h1>Chess Puzzles</h1>
+        <h1>Задачи</h1>
         
         <div id="board"></div>
         
-        <div id="puzzleInfo">
-            <div id="puzzleTitle">Select a puzzle to begin</div>
+        <div id="puzzleInfo" class="puzzleInfo">
+            <div id="puzzleTitle">Выберите задачу для начала</div>
             <div id="puzzlePlayers" class="puzzle-players"></div>
             <div id="puzzleDescription"></div>
         </div>
         
         <div class="puzzle-controls">
-            <button id="prevPuzzleBtn">Previous Puzzle</button>
-            <button id="nextPuzzleBtn">Next Puzzle</button>
-            <button id="showSolutionBtn">Show Solution</button>
-            <button id="resetPuzzleBtn">Reset Puzzle</button>
+            <button id="prevPuzzleBtn">Прошлая задача</button>
+            <button id="nextPuzzleBtn">Следующая задача</button>
+            <button id="showSolutionBtn">Решение</button>
+            <button id="resetPuzzleBtn">Сбросить</button>
         </div>
         
         <div id="solutionSection" class="solution-section">
-            <h3>Solution</h3>
+            <h3>Решение</h3>
             <div id="solutionText"></div>
             <div id="solutionMoves"></div>
         </div>

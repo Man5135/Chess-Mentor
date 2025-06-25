@@ -36,6 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
         lose: document.getElementById('loseSound')
     };
 
+    // Функция для предотвращения скроллинга на мобильных устройствах
+    function preventScroll(e) {
+        e.preventDefault();
+    }
+
     // Функция для копирования PGN в буфер обмена
     function copyPgnToClipboard() {
         updateGameHeaders();
@@ -164,6 +169,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Проверка перед началом перемещения фигуры
     function onDragStart(source, piece) {
+        // Предотвращаем скроллинг при перемещении фигур на мобильных устройствах
+        document.addEventListener('touchmove', preventScroll, { passive: false });
+        
         return !aiThinking && 
                !game.game_over() && 
                ((playerColor === 'white' && piece[0] === 'w') || 
@@ -176,7 +184,10 @@ document.addEventListener('DOMContentLoaded', function() {
         hintActive = false;
         document.getElementById('hintText').innerHTML = '';
         
-        if (aiThinking) return 'snapback';
+        if (aiThinking) {
+            document.removeEventListener('touchmove', preventScroll);
+            return 'snapback';
+        }
 
         const move = game.move({
             from: source,
@@ -184,7 +195,10 @@ document.addEventListener('DOMContentLoaded', function() {
             promotion: 'q'
         });
 
-        if (move === null) return 'snapback';
+        if (move === null) {
+            document.removeEventListener('touchmove', preventScroll);
+            return 'snapback';
+        }
 
         if (move.captured) {
             playSound('capture');
@@ -205,6 +219,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // После завершения анимации перемещения
     function onSnapEnd() {
+        // Удаляем обработчик предотвращения скроллинга
+        document.removeEventListener('touchmove', preventScroll);
         board.position(game.fen());
     }
 
@@ -282,10 +298,10 @@ document.addEventListener('DOMContentLoaded', function() {
             let maxEval = -Infinity;
             for (let i = 0; i < moves.length; i++) {
                 game.move(moves[i]);
-                const eval = minimax(game, depth - 1, alpha, beta, false);
+                const evaluation = minimax(game, depth - 1, alpha, beta, false);
                 game.undo();
-                maxEval = Math.max(maxEval, eval);
-                alpha = Math.max(alpha, eval);
+                maxEval = Math.max(maxEval, evaluation);
+                alpha = Math.max(alpha, evaluation);
                 if (beta <= alpha) break;
             }
             return maxEval;
@@ -293,10 +309,10 @@ document.addEventListener('DOMContentLoaded', function() {
             let minEval = Infinity;
             for (let i = 0; i < moves.length; i++) {
                 game.move(moves[i]);
-                const eval = minimax(game, depth - 1, alpha, beta, true);
+                const evaluation = minimax(game, depth - 1, alpha, beta, true);
                 game.undo();
-                minEval = Math.min(minEval, eval);
-                beta = Math.min(beta, eval);
+                minEval = Math.min(minEval, evaluation);
+                beta = Math.min(beta, evaluation);
                 if (beta <= alpha) break;
             }
             return minEval;

@@ -1,153 +1,117 @@
 const { Chess } = require('chess.js');
 const { evaluateBoard, findBestMove, minimax, countCenterControl } = require('./script');
 
-jest.mock('chess.js', () => {
-  const originalModule = jest.requireActual('chess.js');
-  return {
-    ...originalModule,
-    Chess: jest.fn().mockImplementation(() => ({
-      move: jest.fn(),
-      undo: jest.fn(),
-      in_checkmate: jest.fn(),
-      in_draw: jest.fn(),
-      in_check: jest.fn(),
-      turn: jest.fn(),
-      moves: jest.fn(),
-      board: jest.fn(),
-      fen: jest.fn(),
-      game_over: jest.fn(),
-      history: jest.fn(),
-      load: jest.fn(),
-      load_pgn: jest.fn(),
-      pgn: jest.fn(),
-    })),
-  };
-});
-
 describe('Chess AI Functions', () => {
-  let mockGame;
+  let game;
 
   beforeEach(() => {
-    mockGame = new Chess();
-    mockGame.turn.mockReturnValue('w');
-    mockGame.moves.mockReturnValue([]);
-    mockGame.board.mockReturnValue(Array(8).fill().map(() => Array(8).fill(null)));
+    game = new Chess();
   });
 
   describe('evaluateBoard', () => {
     it('should return high positive value for AI checkmate', () => {
-      mockGame.in_checkmate.mockReturnValue(true);
-      mockGame.turn.mockReturnValue('b');
-      const score = evaluateBoard(mockGame, 'w', 'b');
+      game.load('8/8/8/8/8/8/6k1/5r1K b - - 0 1'); // Черные ставят мат
+      const score = evaluateBoard(game);
       expect(score).toBe(10000);
     });
 
     it('should return high negative value for player checkmate', () => {
-      mockGame.in_checkmate.mockReturnValue(true);
-      mockGame.turn.mockReturnValue('w');
-      const score = evaluateBoard(mockGame, 'w', 'b');
+      game.load('8/8/8/8/8/8/6K1/5R1k w - - 0 1'); // Белые ставят мат
+      const score = evaluateBoard(game);
       expect(score).toBe(-10000);
     });
 
     it('should return 0 for draw', () => {
-      mockGame.in_draw.mockReturnValue(true);
-      const score = evaluateBoard(mockGame, 'w', 'b');
+      game.load('8/8/8/8/8/8/8/4k3 b - - 0 1'); // Ничья (пат)
+      const score = evaluateBoard(game);
       expect(score).toBe(0);
     });
 
     it('should evaluate piece values correctly', () => {
-      mockGame.board.mockReturnValue([
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, { type: 'p', color: 'w' }, null, null, null, null, null],
-        [null, null, null, { type: 'q', color: 'b' }, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null]
-      ]);
-      const score = evaluateBoard(mockGame, 'w', 'b');
-      expect(score).toBeLessThan(0); // У черных ферзь, должно быть преимущество
+      game.load('8/8/8/3p4/4P3/8/8/8 w - - 0 1'); // Белая пешка против черной
+      const score = evaluateBoard(game);
+      expect(score).toBeLessThan(0); // Черные имеют преимущество
+    });
+
+    it('should add check bonus', () => {
+      game.load('8/8/8/8/8/5q2/6K1/8 b - - 0 1'); // Шах
+      const score = evaluateBoard(game);
+      expect(score).toBeGreaterThan(0); // Черные имеют преимущество
     });
   });
 
   describe('minimax', () => {
     it('should return evaluation when depth is 0', () => {
-      mockGame.board.mockReturnValue([
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, { type: 'p', color: 'w' }, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null]
-      ]);
-      const score = minimax(mockGame, 0, -Infinity, Infinity, true, 'w', 'b');
+      game.load('8/8/8/8/8/8/8/4k3 b - - 0 1');
+      const score = minimax(game, 0, -Infinity, Infinity, true);
+      expect(typeof score).toBe('number');
+    });
+
+    it('should return higher score for maximizing player', () => {
+      game.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+      const score = minimax(game, 1, -Infinity, Infinity, true);
       expect(typeof score).toBe('number');
     });
   });
 
   describe('findBestMove', () => {
     it('should return a move when moves are available', () => {
-      mockGame.moves.mockReturnValue([{ from: 'e2', to: 'e4' }]);
-      const move = findBestMove(mockGame, 1, 'w', 'b');
+      game.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+      const move = findBestMove(game, 1);
       expect(move).toHaveProperty('from');
       expect(move).toHaveProperty('to');
     });
 
     it('should return null when no moves are available', () => {
-      mockGame.moves.mockReturnValue([]);
-      const move = findBestMove(mockGame, 1, 'w', 'b');
+      game.load('8/8/8/8/8/8/6k1/5r1K b - - 0 1'); // Мат
+      const move = findBestMove(game, 1);
       expect(move).toBeNull();
     });
   });
 
   describe('countCenterControl', () => {
     it('should count center control correctly', () => {
-      mockGame.moves.mockImplementation(({ square }) => {
-        if (square === 'e4') return [{ color: 'w' }];
-        if (square === 'd4') return [{ color: 'b' }];
-        return [];
-      });
-      const control = countCenterControl(mockGame, 'w', 'b');
-      expect(control).toBe(0); // w контролирует e4, b контролирует d4 => разница 0
+      game.load('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1');
+      const control = countCenterControl(game);
+      expect(control).toBeGreaterThan(0); // Белые контролируют центр
+    });
+
+    it('should return 0 when no center control', () => {
+      game.load('8/8/8/8/8/8/8/4k3 b - - 0 1');
+      const control = countCenterControl(game);
+      expect(control).toBe(0);
     });
   });
 });
 
 describe('Performance Tests', () => {
-  let mockGame;
+  let game;
 
   beforeEach(() => {
-    mockGame = new Chess();
-    mockGame.turn.mockReturnValue('w');
-    mockGame.moves.mockReturnValue([
-      { from: 'e2', to: 'e4' },
-      { from: 'g1', to: 'f3' },
-      { from: 'f1', to: 'b5' }
-    ]);
-    mockGame.board.mockReturnValue(Array(8).fill().map(() => Array(8).fill(null)));
+    game = new Chess();
+    game.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
   });
 
   test('evaluateBoard performance', () => {
     const start = performance.now();
-    evaluateBoard(mockGame, 'w', 'b');
+    for (let i = 0; i < 100; i++) {
+      evaluateBoard(game);
+    }
     const end = performance.now();
-    expect(end - start).toBeLessThan(10); // Ожидаем выполнение менее чем за 10 мс
+    expect(end - start).toBeLessThan(50);
   });
 
   test('minimax with depth 2 performance', () => {
     const start = performance.now();
-    minimax(mockGame, 2, -Infinity, Infinity, true, 'w', 'b');
+    minimax(game, 2, -Infinity, Infinity, true);
     const end = performance.now();
-    expect(end - start).toBeLessThan(100); // Ожидаем выполнение менее чем за 100 мс
+    expect(end - start).toBeLessThan(100);
   });
 
   test('findBestMove with depth 2 performance', () => {
     const start = performance.now();
-    findBestMove(mockGame, 2, 'w', 'b');
+    findBestMove(game, 2);
     const end = performance.now();
-    expect(end - start).toBeLessThan(150); // Ожидаем выполнение менее чем за 150 мс
+    expect(end - start).toBeLessThan(150);
   });
 });

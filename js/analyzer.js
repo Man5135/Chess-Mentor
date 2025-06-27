@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let moves = [];
     let currentHighlights = [];
     
-    // DOM elements
     const pgnInput = document.getElementById('pgnInput');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const clearBtn = document.getElementById('clearBtn');
@@ -23,10 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const analysisText = document.getElementById('analysisText');
     const moveCounter = document.getElementById('moveCounter');
     
-    // Initialize
     updateButtons();
     
-    // Event listeners
     analyzeBtn.addEventListener('click', analyzeGame);
     clearBtn.addEventListener('click', clearAnalysis);
     prevMoveBtn.addEventListener('click', prevMove);
@@ -34,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
     firstMoveBtn.addEventListener('click', firstMove);
     lastMoveBtn.addEventListener('click', lastMove);
     
-    // Analyze PGN game
     function analyzeGame() {
         const pgn = pgnInput.value.trim();
         if (!pgn) return;
@@ -251,12 +247,10 @@ document.addEventListener('DOMContentLoaded', function() {
             improvements: []
         };
         
-        // Evaluate the played move
         const tempGame = new Chess(game.fen());
         tempGame.move(move);
         const moveScore = evaluateBoard(tempGame);
         
-        // Evaluate the best move
         let bestScore = -Infinity;
         if (bestMove) {
             tempGame.undo();
@@ -266,7 +260,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const scoreDiff = bestScore - moveScore;
         
-        // Determine move quality
         if (scoreDiff > 200) {
             analysis.moveQuality = 'Blunder';
             analysis.mistakes.push(`Lost advantage (${Math.round(scoreDiff/100)} pawns)`);
@@ -282,7 +275,6 @@ document.addEventListener('DOMContentLoaded', function() {
             analysis.moveQuality = 'Excellent move';
         }
         
-        // Specific move analysis
         if (move.captured) {
             analysis.improvements.push(`Captured ${move.captured}`);
         } else if (move.promotion) {
@@ -291,7 +283,6 @@ document.addEventListener('DOMContentLoaded', function() {
             analysis.improvements.push('Castled for king safety');
         }
         
-        // Check for missed opportunities
         if (bestMove) {
             if (bestMove.captured && !move.captured) {
                 analysis.mistakes.push(`Missed chance to capture ${bestMove.captured}`);
@@ -370,7 +361,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return `<div class="best-move-explanation">${explanation}</div>`;
     }
     
-    // Chess AI functions
     function findBestMove(game, depth) {
         const moves = game.moves({verbose: true});
         if (moves.length === 0) return null;
@@ -447,10 +437,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Add mobility bonus
         score += game.moves().length * (game.turn() === 'w' ? 1 : -1);
         
-        // Add center control bonus
         const centerSquares = ['e4', 'd4', 'e5', 'd5'];
         for (const square of centerSquares) {
             if (game.moves({square: square, verbose: true}).length > 0) {

@@ -2,7 +2,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const board = Chessboard('board', {
         draggable: true,
         position: 'start',
+        onDragStart: onDragStart,
         onDrop: onDrop,
+        onSnapEnd: onSnapEnd,
         pieceTheme: './wikipedia/{piece}.png'
     });
 
@@ -27,6 +29,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextPuzzleBtn = document.getElementById('nextPuzzleBtn');
     const showSolutionBtn = document.getElementById('showSolutionBtn');
     const resetPuzzleBtn = document.getElementById('resetPuzzleBtn');
+
+    // Функция для предотвращения скроллинга на мобильных устройствах
+    function preventScroll(e) {
+        e.preventDefault();
+    }
+
+    // Обработчик начала перемещения фигуры
+function onDragStart(source, piece) {
+    // Предотвращаем скроллинг при перемещении фигур на мобильных устройствах
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    
+    return !isShowingSolution && 
+           currentPuzzle && 
+           isPlayerTurn &&
+           ((playerColor === 'white' && piece[0] === 'w') || 
+           (playerColor === 'black' && piece[0] === 'b'));
+}
+
+    // Обработчик завершения перемещения
+    function onSnapEnd() {
+        document.removeEventListener('touchmove', preventScroll);
+    }
 
     // Load puzzles from JSON file
     function loadPuzzles() {
@@ -98,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (solutionSteps.length > 0) {
             const correctMove = solutionSteps[0];
             
-            // Изменено: Сравниваем только to и from, так как piece может отличаться из-за превращения
             if (move.from === correctMove.from && move.to === correctMove.to) {
                 // Correct move - make AI response
                 solutionSteps.shift();
@@ -110,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const aiMoveObj = game.move({
                             from: aiMove.from,
                             to: aiMove.to,
-                            promotion: 'q' // Добавлено: учитываем превращение пешки
+                            promotion: 'q'
                         });
                         
                         if (aiMoveObj) {
@@ -182,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const moveObj = game.move({
             from: move.from,
             to: move.to,
-            promotion: 'q' // Добавлено: учитываем превращение пешки
+            promotion: 'q'
         });
         
         if (!moveObj) {
